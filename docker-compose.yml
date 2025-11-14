@@ -14,3 +14,16 @@ services:
     # Uncomment if you need to mount volumes for script execution
     # volumes:
     #   - ./scripts:/scripts:ro
+
+  swagger-ui:
+    image: swaggerapi/swagger-ui:latest
+    container_name: voidgate-swagger
+    ports:
+      - "8080:8080"
+    environment:
+      - SWAGGER_JSON=/openapi.yaml
+    volumes:
+      - ./openapi.yaml:/openapi.yaml:ro
+    depends_on:
+      - voidgate
+    restart: unless-stopped

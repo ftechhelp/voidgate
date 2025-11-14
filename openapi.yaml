@@ -1,0 +1,239 @@
+openapi: 3.0.3
+info:
+  title: Voidgate API
+  version: 1.0.0
+  description: |
+    Minimal HTTP API for executing commands and scripts in isolated environments.
+
+    WARNING: This API executes arbitrary commands. Use only in isolated, controlled environments. Never expose to the public internet.
+
+    Auth model: include the password as `password` in the JSON body for POST endpoints.
+servers:
+  - url: http://172.17.0.1:5000
+    description: Default Docker bridge gateway host (containers -> host)
+  - url: http://{host}:{port}
+    description: Custom host/port for local dev or server deployment
+    variables:
+      host:
+        default: 127.0.0.1
+      port:
+        default: "5000"
+paths:
+  /health:
+    get:
+      summary: Health check
+      tags: [Health]
+      responses:
+        '200':
+          description: Service is healthy
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HealthResponse'
+              examples:
+                ok:
+                  value:
+                    status: healthy
+  /execute:
+    post:
+      summary: Execute a shell command (30s timeout)
+      tags: [Execution]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ExecuteRequest'
+            examples:
+              example:
+                value:
+                  password: playground_voidgate
+                  command: ls -la
+      responses:
+        '200':
+          description: Command executed (success or failure indicated in body)
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ExecuteResponse'
+              examples:
+                success:
+                  value:
+                    stdout: "..."
+                    stderr: ""
+                    return_code: 0
+                    success: true
+                failure:
+                  value:
+                    stdout: ""
+                    stderr: "..."
+                    return_code: 1
+                    success: false
+        '400':
+          description: Bad request (missing data, invalid JSON, etc.)
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '401':
+          description: Invalid password
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '408':
+          description: Command timed out after 30 seconds
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '500':
+          description: Internal server error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+  /run_script:
+    post:
+      summary: Execute a script from an absolute path (30s timeout)
+      description: |
+        Runs a script at an absolute path with optional args and working directory.
+        - `script_path` must be absolute
+        - `working_dir` (if provided) must be absolute
+      tags: [Execution]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/RunScriptRequest'
+            examples:
+              example:
+                value:
+                  password: playground_voidgate
+                  script_path: /absolute/path/to/script.sh
+                  args: ["--flag", "value"]
+                  working_dir: /absolute/path/to/dir
+      responses:
+        '200':
+          description: Script executed (success or failure indicated in body)
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RunScriptResponse'
+              examples:
+                success:
+                  value:
+                    stdout: "Script output\n"
+                    stderr: ""
+                    return_code: 0
+                    success: true
+                    script_path: /absolute/path/to/script.sh
+                    args: ["--flag", "value"]
+                    working_dir: /absolute/path/to/dir
+        '400':
+          description: Bad request (invalid JSON, missing params, relative paths, invalid args type)
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '401':
+          description: Invalid password
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '403':
+          description: Script file is not readable
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '404':
+          description: Script file not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '408':
+          description: Script timed out after 30 seconds
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '500':
+          description: Internal server error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+components:
+  schemas:
+    HealthResponse:
+      type: object
+      properties:
+        status:
+          type: string
+          example: healthy
+      required: [status]
+    ExecuteRequest:
+      type: object
+      properties:
+        password:
+          type: string
+          description: API password (set via VOIDGATE_PASSWORD)
+        command:
+          type: string
+          description: Shell command to execute
+      required: [password, command]
+    ExecuteResponse:
+      type: object
+      properties:
+        stdout:
+          type: string
+        stderr:
+          type: string
+        return_code:
+          type: integer
+          format: int32
+        success:
+          type: boolean
+      required: [stdout, stderr, return_code, success]
+    RunScriptRequest:
+      type: object
+      properties:
+        password:
+          type: string
+          description: API password (set via VOIDGATE_PASSWORD)
+        script_path:
+          type: string
+          description: Absolute path to script file
+        args:
+          type: array
+          description: Optional list of arguments
+          items:
+            type: string
+        working_dir:
+          type: string
+          description: Optional absolute working directory
+      required: [password, script_path]
+    RunScriptResponse:
+      allOf:
+        - $ref: '#/components/schemas/ExecuteResponse'
+        - type: object
+          properties:
+            script_path:
+              type: string
+            args:
+              type: array
+              items: { type: string }
+            working_dir:
+              type: string
+              nullable: true
+          required: [script_path, args]
+    Error:
+      type: object
+      properties:
+        error:
+          type: string
+      required: [error]

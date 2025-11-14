@@ -39,6 +39,20 @@ docker run -p 5000:5000 -e VOIDGATE_PASSWORD=secret voidgate
 VOIDGATE_PASSWORD=secret docker-compose up -d
 ```
 
+### OpenAPI / Swagger UI
+
+View and explore the API using Swagger UI (served via docker-compose):
+
+```bash
+# Start Swagger UI (and Voidgate service if not running)
+docker-compose up -d swagger-ui
+
+# Open your browser at:
+# http://localhost:8080
+```
+
+Swagger UI is configured to load the local `openapi.yaml`. You can also paste `openapi.yaml` into https://editor.swagger.io for ad-hoc exploration.
+
 ## Configuration
 
 Configure via environment variables:
