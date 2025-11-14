@@ -164,9 +164,27 @@ The test suite includes 20 tests covering:
 
 ## Use Cases
 
-Voidgate is designed for scenarios where you need to trigger commands or scripts remotely in controlled environments:
+Voidgate is designed for a specific use case: **running commands on the host machine from Docker containers**.
 
-- Docker container management
+### Primary Use Case
+
+When you run everything on your server as Docker containers in segregated networks, you sometimes need containers to execute commands on the host system. Voidgate provides this capability by running on the host and exposing an API that containers can call.
+
+**Deployment Pattern:**
+- **Production/Server**: Run `api.py` directly on the host system (not in Docker)
+- **Local Development**: Run in Docker to test services that will use it
+- **Default IP (`172.17.0.1`)**: This is typically the Docker bridge gateway IP, allowing containers to access the API on the host
+
+### Security Considerations
+
+The API must remain isolated from the internet. Ensure:
+- Bind to Docker bridge interface (`172.17.0.1`) or localhost only
+- Use firewall rules to block external access
+- Use a strong password via `VOIDGATE_PASSWORD`
+- Only expose to trusted container networks
+
+### Additional Use Cases
+
 - CI/CD pipeline automation
 - Development environment orchestration
 - Isolated command execution for testing
