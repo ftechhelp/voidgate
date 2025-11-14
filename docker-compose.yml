@@ -1,0 +1,16 @@
+services:
+  voidgate:
+    build: .
+    container_name: voidgate
+    ports:
+      - "5555:5000"
+    environment:
+      - VOIDGATE_PASSWORD=${VOIDGATE_PASSWORD:-playground_voidgate}
+      - VOIDGATE_HOST=0.0.0.0
+    restart: unless-stopped
+    # Security considerations for command execution
+    cap_add:
+      - SYS_ADMIN  # Only if needed for specific commands
+    # Uncomment if you need to mount volumes for script execution
+    # volumes:
+    #   - ./scripts:/scripts:ro
