@@ -50,10 +50,10 @@ Example run_script request:
 ## Development Workflow
 - **Run server locally**: `python3 api.py` (starts on `http://172.17.0.1:5000` by default)
 - **Custom configuration**: `VOIDGATE_PASSWORD=mypass VOIDGATE_HOST=127.0.0.1 python3 api.py`
+- **Run tests**: `python3 test_api.py` or `python3 -m unittest test_api.py -v`
 - **Docker build**: `docker build -t voidgate .`
 - **Docker run**: `docker run -p 5000:5000 -e VOIDGATE_PASSWORD=secret voidgate`
 - **Docker Compose**: `docker-compose up -d` (uses `VOIDGATE_PASSWORD` from environment or defaults)
-- **No tests**: Project currently has no test suite
 - **No dependencies**: Pure Python 3 stdlib, no requirements.txt or virtual environment needed
 
 ## Code Conventions
